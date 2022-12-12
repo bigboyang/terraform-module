@@ -12,6 +12,49 @@ resource "aws_autoscaling_group" "asg-01" {
   launch_configuration      = aws_launch_configuration.ec2.name
   /* vpc_zone_identifier       = [aws_subnet.publicSubnet1.id, aws_subnet.publicSubnet2.id] # asg에 대한 가용역역 */
   vpc_zone_identifier       = [data.terraform_remote_state.vpc.outputs.public_subnet_id_1, data.terraform_remote_state.vpc.outputs.public_subnet_id_2] # asg에 대한 가용역역
+
+  tag {
+    key                   = "Name"
+    value                 = var.cluster_name
+    propagate_at_launch   = true
+  }
+
+  dynamic "tag" { # 여기서 tag는 for_each로 가져온 obj이자 module에서 inline요소를 추가할 인라인값?
+
+    for_each  = {
+      for key, value in var.custom_tags :
+      key => upper(value)
+      if key != "Name" # Name key을 필터링
+    }
+
+    content {
+      key     = tag.key
+      value   = tag.value
+      propagate_at_launch   = true
+    }
+  }
+}
+
+# asg스케줄러 
+resource "aws_autoscaling_schedule" "sacle_out_during_business_hours" {
+    count                       = var.enable_autoscaling ? 1 : 0
+
+    scheduled_action_name       = "${var.cluster_name}-scale-out-during-biz-hours"
+    min_size                    = 1
+    max_size                    = 10
+    desired_capacity            = 2
+    recurrence                  = "0 9 * * *"
+    autoscaling_group_name      = aws_autoscaling_group.asg-01.name
+}
+resource "aws_autoscaling_schedule" "sacle_in_during_night_hours" {
+    count                       = var.enable_autoscaling ? 1 : 0
+
+    scheduled_action_name       = "${var.cluster_name}-scale-out-during-night-hours"
+    min_size                    = 1
+    max_size                    = 2
+    desired_capacity            = 1
+    recurrence                  = "0 17 * * *"
+    autoscaling_group_name      = aws_autoscaling_group.asg-01.name
 }
 
 data "aws_ami" "ubuntu" {
@@ -27,9 +70,24 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"]
 }
 
-# db정보를 변환하는 탬플릿 생성
+# db정보를 변환하는 탬플릿 생성 (1번)
 data "template_file" "user_data" {
+  count    = var.eanble_new_user_data ? 0 : 1
+
   template = file("${path.module}/user-data.sh")
+
+  # 템플릿에 넘길 변수 선언
+  vars = {
+    db_address = data.terraform_remote_state.db.outputs.address
+    db_port    = data.terraform_remote_state.db.outputs.port
+  }
+}
+
+# db정보를 변환하는 탬플릿 생성 (2번)
+data "template_file" "user_data_new" {
+  count    = var.eanble_new_user_data ? 1 : 0 # count매개변수를 사용하므로 해당 data는 배열임
+
+  template = file("${path.module}/user-data-new.sh")
 
   # 템플릿에 넘길 변수 선언
   vars = {
@@ -48,8 +106,11 @@ resource "aws_launch_configuration" "ec2" {
   security_groups             = [data.terraform_remote_state.vpc.outputs.public_web_sg]
   associate_public_ip_address = true
 
-  user_data = data.template_file.user_data.rendered
-
+  user_data = (
+    length(data.template_file.user_data[*]) > 0
+    ? data.template_file.user_data[0].rendered
+    : data.template_file.user_data_new[0].rendered
+  )
   lifecycle {
     create_before_destroy = true
   }
