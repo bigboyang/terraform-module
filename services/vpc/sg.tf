@@ -44,7 +44,6 @@ resource "aws_security_group" "privateSG01" {
   vpc_id      = aws_vpc.vpc.id
 
   /* security_groups	= [aws_security_group.publicSG01.id] # 끌고와야함 */
-
   ingress {
     description = "For mysql port"
     protocol    = "tcp"

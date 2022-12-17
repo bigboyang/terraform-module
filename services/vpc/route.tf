@@ -1,7 +1,7 @@
-/* 
+
 # public라우트테이블
 resource "aws_route_table" "testPublicRTb" {
-  vpc_id = data.terraform_remote_state.vpc.outputs.vpc_id
+  vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -15,20 +15,20 @@ resource "aws_route_table" "testPublicRTb" {
 
 ## route subnet associate
 resource "aws_route_table_association" "publicAssociation01" {
-  subnet_id      = data.terraform_remote_state.vpc.outputs.public_subnet_id_1
+  subnet_id      = aws_subnet.publicSubnet1.id
   route_table_id = aws_route_table.testPublicRTb.id
 }
 
 resource "aws_route_table_association" "privateAssociation01" {
-  subnet_id      = data.terraform_remote_state.vpc.outputs.private_subnet_id_1
+  subnet_id      = aws_subnet.privateSubnet1.id
   route_table_id = aws_route_table.testPrivateRTb.id
 }
 
 
 #private라우트테이블
 resource "aws_route_table" "testPrivateRTb" {
-  vpc_id = data.terraform_remote_state.vpc.outputs.vpc_id
-
+  vpc_id = aws_vpc.vpc.id
+  
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat_gw.id
@@ -40,11 +40,11 @@ resource "aws_route_table" "testPrivateRTb" {
 }
 
 resource "aws_route_table_association" "publicAssociation02" {
-  subnet_id      = data.terraform_remote_state.vpc.outputs.public_subnet_id_2
+  subnet_id      = aws_subnet.publicSubnet2.id
   route_table_id = aws_route_table.testPublicRTb.id
 }
 
 resource "aws_route_table_association" "privateAssociation02" {
-  subnet_id      = data.terraform_remote_state.vpc.outputs.private_subnet_id_2
+  subnet_id      = aws_subnet.privateSubnet2.id
   route_table_id = aws_route_table.testPrivateRTb.id
-} */
+}

@@ -1,4 +1,4 @@
-/* # CPU사용률 경보 - 5분 동안 90% 이상일떄
+# CPU사용률 경보 - 5분 동안 90% 이상일떄
 resource "aws_cloudwatch_metric_alarm" "high_cpu_utilization" {
     alarm_name          ="${var.cluster_name}-high_cpu_utilization"
     namespace           ="AWS/EC2"
@@ -35,4 +35,4 @@ resource "aws_cloudwatch_metric_alarm" "low_cpu_credit_balance" {
     statistic           = "Minimum"
     threshold           = 10
     unit                = "Count"
-} */
+}

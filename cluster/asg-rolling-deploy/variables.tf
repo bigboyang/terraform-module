@@ -1,15 +1,21 @@
+variable "subnet_ids" {
+  description = "subnet_ids"
+  type        = list(string)
+}
+
+variable "target_group_arns" {
+  description = "target_group_arns"
+  type        = string
+}
+
+variable "user_data" {
+  description = "user_data"
+  type        = string
+  default     = null
+}
+
 variable "cluster_name" {
   description = "cluster name"
-  type        = string
-}
-
-variable "db_remote_state_bucket" {
-  description = "s3 name"
-  type        = string
-}
-
-variable "db_remote_state_key" {
-  description = "s3 key name"
   type        = string
 }
 
@@ -48,10 +54,3 @@ variable "max_size" {
   default     = 4
   type        = number
 }
-
-variable "environment" {
-  description = "env"
-  type        = string
-  default     = "staging"
-}
-
