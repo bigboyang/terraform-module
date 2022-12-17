@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "alb" {
-    source = "../networking/alb/"
+    source = "../../networking/alb/"
 
     cluster_name = "test"
     alb_name = "module-test"

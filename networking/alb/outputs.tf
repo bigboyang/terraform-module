@@ -13,7 +13,7 @@ output "alb_security_group_id" {
     description = "alb_security_group_id"
 }
 
-output "alb_target_group_arn" {
+/* output "alb_target_group_arn" {
     value       = aws_alb_target_group.test.arn
     description = "alb_target_group_arn"
-}
+} */
