@@ -1,20 +1,10 @@
-data "terraform_remote_state" "vpc" {
-  backend = "s3"
-
-  config = {
-    bucket = "kkc-terraform-state"
-    key    = "state/services/vpc/terraform-tfstate"
-    region = "ap-northeast-2"
-  }
-}
-
 # alb.tf
 resource "aws_alb" "test" {
   name                             = "${var.cluster_name}-${var.alb_name}"
   internal                         = false
   load_balancer_type               = "application"
-  security_groups                  = [data.terraform_remote_state.vpc.outputs.public_web_sg]
-  subnets                          = [data.terraform_remote_state.vpc.outputs.public_subnet_id_1, data.terraform_remote_state.vpc.outputs.public_subnet_id_2]
+  security_groups                  = [local.public_web_sg]
+  subnets                          = [local.public_subnet_id_1, local.public_subnet_id_2]
   enable_cross_zone_load_balancing = true
 }
 
@@ -55,5 +45,20 @@ resource "aws_alb_listener" "test" {
       status_code = 404
     }
   }
+}
 
+data "aws_route53_zone" "selected" {
+  name         = "rocknrollloveaffair.com"
+}
+
+resource "aws_route53_record" "www" {
+  zone_id        =  data.aws_route53_zone.selected.zone_id
+  name           = "*.rocknrollloveaffairAAA.com" 
+  type           = "A"
+
+  alias {
+    name                   = aws_alb.test.dns_name
+    zone_id                = aws_alb.test.zone_id
+    evaluate_target_health = true
+  }
 }
